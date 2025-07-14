@@ -15,6 +15,7 @@ ns-dev/scratch/*~
 *.bak
 
 # Simulation outputs
+# Need to create data/ directory to make sure the code runs
 data/*.json
 
 # Python cache
