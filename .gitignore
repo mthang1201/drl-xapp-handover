@@ -15,8 +15,7 @@ ns-dev/scratch/*~
 *.bak
 
 # Simulation outputs
-data/state.json
-data/actions.json
+data/*.json
 
 # Python cache
 __pycache__/
