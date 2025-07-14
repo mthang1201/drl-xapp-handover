@@ -1,1 +1,34 @@
+# Ignore ns-3 build artifacts
+ns-dev/build/
+ns-dev/scratch/*.o
+ns-dev/scratch/*~
+
+# Logs and generated data
+*.log
+*.pcap
+*.sqlite
+*.tr
+*.xml
+*.txt
+*.out
+*.bak
+
+# Simulation outputs
+data/state.json
+data/actions.json
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Editor/OS metadata
 .DS_Store
+.vscode/
+*.swp
+*.swo
+
+# Shell history or temp
+scripts/*.sh~
+
+# Ignore zipped packages
+*.zip

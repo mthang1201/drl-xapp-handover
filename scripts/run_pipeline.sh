@@ -1,5 +1,5 @@
 #!/bin/bash
-cd ns-3-dev
+cd ns-dev
 ./ns3 build
 
 echo "Running ns-3 simulation..."

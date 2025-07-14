@@ -4,6 +4,7 @@
 #include "ns3/mobility-module.h"
 #include "ns3/lte-module.h"
 #include "ns3/config-store-module.h"
+
 #include <fstream>
 #include <string>
 #include <map>
@@ -14,16 +15,23 @@ NS_LOG_COMPONENT_DEFINE("XappHandoverSim");
 
 std::map<int, Ptr<NetDevice>> ueDeviceMap;
 std::map<int, Ptr<NetDevice>> enbDeviceMap;
+std::map<uint64_t, double> g_ueRsrpMap;
 
-void ExportState(const Ptr<LteHelper> lteHelper, NodeContainer ueNodes) {
-    std::ofstream file("data/state.json");
+void ExportState(const Ptr<LteHelper> lteHelper, NodeContainer ueNodes)
+{
+    std::ofstream file("../data/state.json");
     file << "{\n";
 
-    for (uint32_t i = 0; i < ueNodes.GetN(); ++i) {
+    for (uint32_t i = 0; i < ueNodes.GetN(); ++i)
+    {
         Ptr<NetDevice> dev = ueNodes.Get(i)->GetDevice(0);
-        Ptr<UeNetDevice> ueDev = dev->GetObject<UeNetDevice>();
+        Ptr<LteUeNetDevice> ueDev = dev->GetObject<LteUeNetDevice>();
+        uint64_t imsi = ueDev->GetImsi();
         uint16_t cellId = ueDev->GetRrc()->GetCellId();
-        double rsrpDbm = ueDev->GetPhy()->GetRsrp();
+
+        double rsrpDbm = -150.0; // Default if unknown
+        if (g_ueRsrpMap.count(imsi))
+            rsrpDbm = g_ueRsrpMap[imsi];
 
         file << "  \"ue_" << i << "\": { \"cellId\": " << cellId << ", \"rsrp\": " << rsrpDbm << " }";
         if (i < ueNodes.GetN() - 1) file << ",";
@@ -64,12 +72,12 @@ void ApplyHandoverActions(const std::string &filename, Ptr<LteHelper> lteHelper)
 
         if (ueId >= 0 && targetCell >= 0 && ueDeviceMap.count(ueId) && enbDeviceMap.count(targetCell)) {
             Ptr<NetDevice> ue = ueDeviceMap[ueId];
-            Ptr<UeNetDevice> ueNd = ue->GetObject<UeNetDevice>();
+            Ptr<LteUeNetDevice> ueNd = ue->GetObject<LteUeNetDevice>();
             uint16_t currentCell = ueNd->GetRrc()->GetCellId();
 
             Ptr<NetDevice> currentEnb = nullptr;
             for (const auto &kv : enbDeviceMap) {
-                Ptr<EnbNetDevice> enb = kv.second->GetObject<EnbNetDevice>();
+                Ptr<LteEnbNetDevice> enb = kv.second->GetObject<LteEnbNetDevice>();
                 if (enb->GetCellId() == currentCell) {
                     currentEnb = kv.second;
                     break;
@@ -78,7 +86,10 @@ void ApplyHandoverActions(const std::string &filename, Ptr<LteHelper> lteHelper)
 
             if (currentEnb) {
                 NS_LOG_INFO("Handover UE " << ueId << " to cell " << targetCell);
-                Simulator::ScheduleNow(&LteHelper::HandoverRequest, lteHelper, ue, currentEnb, enbDeviceMap[targetCell]);
+                // Simulator::ScheduleNow(&LteHelper::HandoverRequest, lteHelper, ue, currentEnb, enbDeviceMap[targetCell]);
+                Simulator::ScheduleNow([=]() {
+                    lteHelper->HandoverRequest(Simulator::Now(), ue, currentEnb, enbDeviceMap[targetCell]);
+                });
             }
         }
         jsonText = jsonText.substr(end + 1);
@@ -126,7 +137,7 @@ int main(int argc, char *argv[]) {
 
     for (double t = 1.0; t < simTime.GetSeconds(); t += 2.0) {
         Simulator::Schedule(Seconds(t), &ExportState, lteHelper, ueNodes);
-        Simulator::Schedule(Seconds(t + 1), &ApplyHandoverActions, "data/actions.json", lteHelper);
+        Simulator::Schedule(Seconds(t + 1), &ApplyHandoverActions, "../data/actions.json", lteHelper);
     }
 
     Simulator::Stop(simTime);

@@ -57,7 +57,6 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/ns3" TYPE FILE FILES
     "/Users/mthang1201/source/repos/drl-xapp-handover/ns-dev/build/include/ns3/core-config.h"
     "/Users/mthang1201/source/repos/drl-xapp-handover/ns-dev/src/core/model/int64x64-128.h"
-    "/Users/mthang1201/source/repos/drl-xapp-handover/ns-dev/src/core/model/example-as-test.h"
     "/Users/mthang1201/source/repos/drl-xapp-handover/ns-dev/src/core/helper/csv-reader.h"
     "/Users/mthang1201/source/repos/drl-xapp-handover/ns-dev/src/core/helper/event-garbage-collector.h"
     "/Users/mthang1201/source/repos/drl-xapp-handover/ns-dev/src/core/helper/random-variable-stream-helper.h"
@@ -160,12 +159,6 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT
     "/Users/mthang1201/source/repos/drl-xapp-handover/ns-dev/src/core/model/matrix-array.h"
     "/Users/mthang1201/source/repos/drl-xapp-handover/ns-dev/build/include/ns3/core-module.h"
     )
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for each subdirectory.
-  include("/Users/mthang1201/source/repos/drl-xapp-handover/ns-dev/cmake-cache/src/core/examples/cmake_install.cmake")
-
 endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
