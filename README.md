@@ -1,4 +1,4 @@
-* Deep reinforcement learning - xApp Handover
+# Deep reinforcement learning - xApp Handover
 
 Tiến độ hoàn thành:
 - Môi trường LTE
