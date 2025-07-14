@@ -1,5 +1,6 @@
 # Ignore ns-3 build artifacts
 ns-dev/build/
+ns-dev/cmake-cache/
 ns-dev/scratch/*.o
 ns-dev/scratch/*~
 

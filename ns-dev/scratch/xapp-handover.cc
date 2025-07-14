@@ -89,12 +89,13 @@ void ApplyHandoverActions(const std::string &filename, Ptr<LteHelper> lteHelper)
                 }
             }
 
-            if (currentEnb) {
-                NS_LOG_INFO("Handover UE " << ueId << " to cell " << targetCell);
-                // Simulator::ScheduleNow(&LteHelper::HandoverRequest, lteHelper, ue, currentEnb, enbDeviceMap[targetCell]);
+            if (currentEnb && targetCell != currentCell) {
+                NS_LOG_INFO("Handover UE " << ueId << " from cell " << currentCell << " to cell " << targetCell);
                 Simulator::ScheduleNow([=]() {
                     lteHelper->HandoverRequest(Simulator::Now(), ue, currentEnb, enbDeviceMap[targetCell]);
                 });
+            } else {
+                NS_LOG_INFO("⛔ Skipping self-handover for UE " << ueId << " at cell " << currentCell);
             }
         }
         jsonText = jsonText.substr(end + 1);
@@ -129,7 +130,7 @@ int main(int argc, char *argv[]) {
 
     // 2. Install LTE devices on eNodeBs and UEs
     NetDeviceContainer enbDevs = lteHelper->InstallEnbDevice(enbNodes);
-    // lteHelper->AddX2Interface(enbNodes);// Add X2 interface for handover
+    lteHelper->AddX2Interface(enbNodes);// Add X2 interface for handover
     NetDeviceContainer ueDevs = lteHelper->InstallUeDevice(ueNodes);
 
     InternetStackHelper internet;
@@ -154,6 +155,8 @@ int main(int argc, char *argv[]) {
 
         uePhy->TraceConnectWithoutContext("ReportCurrentCellRsrp",
             MakeBoundCallback(&UeRsrpTraceCallback, imsi));
+
+        NS_LOG_INFO("Connected RSRP trace for IMSI " << imsi);
     }
 
     // 5. Run the simulation

@@ -112,7 +112,10 @@ def run_training_episode(agent):
         agent.remember(state, action, reward, next_state)
 
         if action != current_cell:
-            actions.append({ "ue": ue_id, "target": target_cell })
+            print(f"UE {ue_id}: handover from {current_cell} to {action}")
+            actions.append({ "ue": ue_id, "target": action })
+        else:
+            print(f"UE {ue_id}: staying at {current_cell} (no handover)")
 
     with open("../data/actions.json", "w") as f:
         json.dump({ "handover": actions }, f, indent=2)
