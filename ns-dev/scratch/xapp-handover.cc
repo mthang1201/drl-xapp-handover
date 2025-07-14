@@ -17,6 +17,11 @@ std::map<int, Ptr<NetDevice>> ueDeviceMap;
 std::map<int, Ptr<NetDevice>> enbDeviceMap;
 std::map<uint64_t, double> g_ueRsrpMap;
 
+void UeRsrpTraceCallback(uint64_t imsi, uint16_t cellId, double rsrp)
+{
+    g_ueRsrpMap[imsi] = rsrp;
+}
+
 void ExportState(const Ptr<LteHelper> lteHelper, NodeContainer ueNodes)
 {
     std::ofstream file("../data/state.json");
@@ -105,6 +110,7 @@ int main(int argc, char *argv[]) {
     Ptr<PointToPointEpcHelper> epcHelper = CreateObject<PointToPointEpcHelper>();
     lteHelper->SetEpcHelper(epcHelper);
 
+    // 1. Configure the simulation
     NodeContainer enbNodes, ueNodes;
     enbNodes.Create(3);
     ueNodes.Create(5);
@@ -121,7 +127,9 @@ int main(int argc, char *argv[]) {
                                 "Bounds", RectangleValue(Rectangle(-150, 150, -150, 150)));
     ueMobility.Install(ueNodes);
 
+    // 2. Install LTE devices on eNodeBs and UEs
     NetDeviceContainer enbDevs = lteHelper->InstallEnbDevice(enbNodes);
+    // lteHelper->AddX2Interface(enbNodes);// Add X2 interface for handover
     NetDeviceContainer ueDevs = lteHelper->InstallUeDevice(ueNodes);
 
     InternetStackHelper internet;
@@ -131,10 +139,24 @@ int main(int argc, char *argv[]) {
     for (uint32_t i = 0; i < ueDevs.GetN(); ++i) ueDeviceMap[i] = ueDevs.Get(i);
     for (uint32_t i = 0; i < enbDevs.GetN(); ++i) enbDeviceMap[i] = enbDevs.Get(i);
 
+    // 3. Attach UEs to eNodeBs
     for (uint32_t i = 0; i < ueNodes.GetN(); ++i) {
         lteHelper->Attach(ueDevs.Get(i));
     }
 
+    // 4. Connect trace BEFORE simulation starts
+    for (uint32_t i = 0; i < ueNodes.GetN(); ++i)
+    {
+        Ptr<NetDevice> dev = ueNodes.Get(i)->GetDevice(0);
+        Ptr<LteUeNetDevice> ueDev = dev->GetObject<LteUeNetDevice>();
+        Ptr<LteUePhy> uePhy = ueDev->GetPhy();
+        uint64_t imsi = ueDev->GetImsi();
+
+        uePhy->TraceConnectWithoutContext("ReportCurrentCellRsrp",
+            MakeBoundCallback(&UeRsrpTraceCallback, imsi));
+    }
+
+    // 5. Run the simulation
     for (double t = 1.0; t < simTime.GetSeconds(); t += 2.0) {
         Simulator::Schedule(Seconds(t), &ExportState, lteHelper, ueNodes);
         Simulator::Schedule(Seconds(t + 1), &ApplyHandoverActions, "../data/actions.json", lteHelper);
